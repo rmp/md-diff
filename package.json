@@ -1,6 +1,6 @@
 {
   "name": "md-diff",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "description": "A web component for visual side-by-side markdown diffs",
   "main": "dist/md-diff.cjs.js",
   "module": "dist/md-diff.esm.js",
@@ -28,12 +28,18 @@
     "type": "git",
     "url": "git+https://github.com/rmp/md-diff.git"
   },
-  "keywords": ["web-component", "markdown", "diff", "side-by-side"],
+  "keywords": [
+    "web-component",
+    "markdown",
+    "diff",
+    "side-by-side"
+  ],
   "author": "Roger Pettett <rmp@psyphi.net>",
   "license": "MIT",
   "type": "module",
   "dependencies": {
     "diff": "^7.0.0",
+    "dompurify": "^3.4.7",
     "marked": "^15.0.0"
   },
   "devDependencies": {

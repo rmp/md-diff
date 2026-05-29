@@ -1,8 +1,12 @@
+import createDOMPurify from 'dompurify';
 import { marked } from 'marked';
 import { computeDiff } from './diff-engine.js';
 
 // Configure marked: safe defaults, no async
 marked.use({ async: false, breaks: false });
+
+// Isolated instance — unaffected by host-app DOMPurify configuration
+const purify = createDOMPurify();
 
 const OBSERVED = [
   'left-content',
@@ -34,6 +38,10 @@ function escapeHtml(str) {
     .replace(/"/g, '&quot;');
 }
 
+function sanitizeCssValue(val) {
+  return String(val).replace(/[{}<>;@\\]/g, '');
+}
+
 /**
  * Render one source line as HTML.
  *
@@ -49,8 +57,8 @@ function escapeHtml(str) {
  */
 function renderBlock(content) {
   if (!content) return '';
-  const html = /** @type {string} */ (marked.parse(content)).trim();
-  // Unwrap a single bare <p>…</p> so plain lines don't add extra block spacing
+  const raw = /** @type {string} */ (marked.parse(content)).trim();
+  const html = purify.sanitize(raw);
   return html.replace(/^<p>([\s\S]*)<\/p>$/, '$1');
 }
 
@@ -288,25 +296,29 @@ export class MdDiff extends HTMLElement {
     return (v !== null && v !== '') ? v : fallback;
   }
 
+  _cssAttr(name, fallback) {
+    return sanitizeCssValue(this._attr(name, fallback));
+  }
+
   _params() {
     return {
       showTextareas:      this.getAttribute('show-textareas') !== 'false',
       leftLabel:          this._attr('left-label',          'Original'),
       rightLabel:         this._attr('right-label',         'Modified'),
-      textareaHeight:     this._attr('textarea-height',     '150px'),
-      diffHeight:         this._attr('diff-height',         '400px'),
-      fontSize:           this._attr('font-size',           '13px'),
-      fontFamily:         this._attr('font-family',         "'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace"),
-      insertionColor:     this._attr('insertion-color',     '#e6ffec'),
-      insertionTextColor: this._attr('insertion-text-color','inherit'),
-      deletionColor:      this._attr('deletion-color',      '#ffebe9'),
-      deletionTextColor:  this._attr('deletion-text-color', 'inherit'),
-      lineNumColor:       this._attr('line-number-color',   '#636e7b'),
-      lineNumBg:          this._attr('line-number-bg',      '#f6f8fa'),
-      bgColor:            this._attr('background-color',    '#ffffff'),
-      borderColor:        this._attr('border-color',        '#d0d7de'),
-      borderRadius:       this._attr('border-radius',       '6px'),
-      emptyColor:         this._attr('empty-color',         '#f8f8f8'),
+      textareaHeight:     this._cssAttr('textarea-height',     '150px'),
+      diffHeight:         this._cssAttr('diff-height',         '400px'),
+      fontSize:           this._cssAttr('font-size',           '13px'),
+      fontFamily:         this._cssAttr('font-family',         "'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, monospace"),
+      insertionColor:     this._cssAttr('insertion-color',     '#e6ffec'),
+      insertionTextColor: this._cssAttr('insertion-text-color','inherit'),
+      deletionColor:      this._cssAttr('deletion-color',      '#ffebe9'),
+      deletionTextColor:  this._cssAttr('deletion-text-color', 'inherit'),
+      lineNumColor:       this._cssAttr('line-number-color',   '#636e7b'),
+      lineNumBg:          this._cssAttr('line-number-bg',      '#f6f8fa'),
+      bgColor:            this._cssAttr('background-color',    '#ffffff'),
+      borderColor:        this._cssAttr('border-color',        '#d0d7de'),
+      borderRadius:       this._cssAttr('border-radius',       '6px'),
+      emptyColor:         this._cssAttr('empty-color',         '#f8f8f8'),
     };
   }
 
