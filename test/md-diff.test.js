@@ -97,10 +97,27 @@ describe('JS property setters', () => {
     cleanup(el);
   });
 
-  it('treats null/undefined as empty string', () => {
+  it('treats null/undefined as empty string for leftContent', () => {
     const el = createElement({ 'left-content': 'something\n' });
     el.leftContent = null;
     expect(el.leftContent).toBe('');
+    cleanup(el);
+  });
+
+  it('treats null/undefined as empty string for rightContent', () => {
+    const el = createElement({ 'right-content': 'something\n' });
+    el.rightContent = null;
+    expect(el.rightContent).toBe('');
+    cleanup(el);
+  });
+
+  it('syncing textarea to same value is a no-op', () => {
+    const el = createElement();
+    el.leftContent = 'test\n';
+    const ta = el.shadowRoot.querySelector('.left-textarea');
+    expect(ta.value).toBe('test\n');
+    el.leftContent = 'test\n';
+    expect(ta.value).toBe('test\n');
     cleanup(el);
   });
 });
@@ -261,6 +278,85 @@ describe('block markdown rendering', () => {
   });
 });
 
+// ── Property upgrade ─────────────────────────────────────────────────────────
+
+describe('property upgrade', () => {
+  it('replays an own-property set before the element was connected', () => {
+    const el = document.createElement('md-diff');
+    // Simulate a pre-upgrade own-property (as if set before the CE definition loaded)
+    Object.defineProperty(el, 'leftContent', {
+      value: 'upgraded\n', writable: true, configurable: true, enumerable: true,
+    });
+    document.body.appendChild(el);
+    expect(el.leftContent).toBe('upgraded\n');
+    const ta = el.shadowRoot.querySelector('.left-textarea');
+    expect(ta.value).toBe('upgraded\n');
+    cleanup(el);
+  });
+
+  it('replays an own-property on rightContent', () => {
+    const el = document.createElement('md-diff');
+    Object.defineProperty(el, 'rightContent', {
+      value: 'right-upgraded\n', writable: true, configurable: true, enumerable: true,
+    });
+    document.body.appendChild(el);
+    expect(el.rightContent).toBe('right-upgraded\n');
+    const ta = el.shadowRoot.querySelector('.right-textarea');
+    expect(ta.value).toBe('right-upgraded\n');
+    cleanup(el);
+  });
+});
+
+// ── attributeChangedCallback edge cases ──────────────────────────────────────
+
+describe('attributeChangedCallback edge cases', () => {
+  it('re-renders when right-content attribute changes', () => {
+    const el = createElement({
+      'left-content':  'aaa\n',
+      'right-content': 'bbb\n',
+    });
+    const before = el.shadowRoot.querySelector('.diff-table').innerHTML;
+    el.setAttribute('right-content', 'zzz\n');
+    const after = el.shadowRoot.querySelector('.diff-table').innerHTML;
+    expect(after).not.toBe(before);
+    expect(el.rightContent).toBe('zzz\n');
+    cleanup(el);
+  });
+
+  it('does not re-render when attribute value is unchanged', () => {
+    const el = createElement({ 'left-content': 'aaa\n' });
+    const before = el.shadowRoot.querySelector('.diff-table').innerHTML;
+    el.setAttribute('left-content', 'aaa\n');
+    const after = el.shadowRoot.querySelector('.diff-table').innerHTML;
+    expect(after).toBe(before);
+    cleanup(el);
+  });
+
+  it('triggers a full re-render when a style attribute changes', () => {
+    const el = createElement({ 'left-content': 'x\n', 'right-content': 'y\n' });
+    const styleBefore = el.shadowRoot.querySelector('style').textContent;
+    el.setAttribute('font-size', '20px');
+    const styleAfter = el.shadowRoot.querySelector('style').textContent;
+    expect(styleAfter).toContain('20px');
+    expect(styleAfter).not.toBe(styleBefore);
+    cleanup(el);
+  });
+
+  it('handles removing right-content attribute (null newVal)', () => {
+    const el = createElement({ 'right-content': 'hello\n' });
+    el.removeAttribute('right-content');
+    expect(el.rightContent).toBe('');
+    cleanup(el);
+  });
+
+  it('handles removing left-content attribute (null newVal)', () => {
+    const el = createElement({ 'left-content': 'hello\n' });
+    el.removeAttribute('left-content');
+    expect(el.leftContent).toBe('');
+    cleanup(el);
+  });
+});
+
 // ── Identical inputs ──────────────────────────────────────────────────────────
 
 describe('identical inputs', () => {
@@ -271,6 +367,114 @@ describe('identical inputs', () => {
     const del = el.shadowRoot.querySelectorAll('.deletion');
     expect(ins.length).toBe(0);
     expect(del.length).toBe(0);
+    cleanup(el);
+  });
+});
+
+// ── Pre-connect behaviour ────────────────────────────────────────────────────
+
+describe('pre-connect behaviour', () => {
+  it('setting leftContent before connect does not throw', () => {
+    const el = document.createElement('md-diff');
+    el.leftContent = 'pre-connect\n';
+    expect(el.leftContent).toBe('pre-connect\n');
+    document.body.appendChild(el);
+    expect(el.leftContent).toBe('pre-connect\n');
+    cleanup(el);
+  });
+
+  it('setting rightContent before connect does not throw', () => {
+    const el = document.createElement('md-diff');
+    el.rightContent = 'pre-connect\n';
+    expect(el.rightContent).toBe('pre-connect\n');
+    document.body.appendChild(el);
+    expect(el.rightContent).toBe('pre-connect\n');
+    cleanup(el);
+  });
+
+  it('attribute set before connect is picked up on connect', () => {
+    const el = document.createElement('md-diff');
+    el.setAttribute('left-content', 'attr-before\n');
+    el.setAttribute('right-content', 'attr-before-r\n');
+    document.body.appendChild(el);
+    expect(el.leftContent).toBe('attr-before\n');
+    expect(el.rightContent).toBe('attr-before-r\n');
+    cleanup(el);
+  });
+});
+
+// ── Style / theme customisation ──────────────────────────────────────────────
+
+describe('style customisation attributes', () => {
+  it('applies custom insertion-color', () => {
+    const el = createElement({ 'insertion-color': '#00ff00' });
+    const style = el.shadowRoot.querySelector('style').textContent;
+    expect(style).toContain('#00ff00');
+    cleanup(el);
+  });
+
+  it('applies custom deletion-color', () => {
+    const el = createElement({ 'deletion-color': '#ff0000' });
+    const style = el.shadowRoot.querySelector('style').textContent;
+    expect(style).toContain('#ff0000');
+    cleanup(el);
+  });
+
+  it('applies custom border-radius', () => {
+    const el = createElement({ 'border-radius': '12px' });
+    const style = el.shadowRoot.querySelector('style').textContent;
+    expect(style).toContain('12px');
+    cleanup(el);
+  });
+
+  it('applies custom diff-height', () => {
+    const el = createElement({ 'diff-height': '800px' });
+    const style = el.shadowRoot.querySelector('style').textContent;
+    expect(style).toContain('800px');
+    cleanup(el);
+  });
+});
+
+// ── HTML escaping ────────────────────────────────────────────────────────────
+
+describe('HTML escaping in labels', () => {
+  it('escapes angle brackets in labels', () => {
+    const el = createElement({ 'left-label': '<script>alert(1)</script>' });
+    const label = el.shadowRoot.querySelector('.ta-label');
+    expect(label.textContent).toContain('<script>');
+    expect(label.innerHTML).not.toContain('<script>');
+    cleanup(el);
+  });
+
+  it('escapes ampersands and quotes in labels', () => {
+    const el = createElement({ 'right-label': 'A & "B"' });
+    const labels = el.shadowRoot.querySelectorAll('.ta-label');
+    expect(labels[1].textContent).toBe('A & "B"');
+    cleanup(el);
+  });
+});
+
+// ── Empty / edge-case rendering ──────────────────────────────────────────────
+
+describe('empty and edge-case rendering', () => {
+  it('renders with both inputs empty', () => {
+    const el = createElement({ 'left-content': '', 'right-content': '' });
+    const cells = el.shadowRoot.querySelectorAll('.diff-cell');
+    expect(cells.length).toBe(0);
+    cleanup(el);
+  });
+
+  it('renders with only whitespace content', () => {
+    const el = createElement({ 'left-content': '   \n', 'right-content': '   \n' });
+    const cells = el.shadowRoot.querySelectorAll('.diff-cell');
+    expect(cells.length).toBeGreaterThan(0);
+    cleanup(el);
+  });
+
+  it('handles content without trailing newline', () => {
+    const el = createElement({ 'left-content': 'no newline', 'right-content': 'no newline' });
+    const table = el.shadowRoot.querySelector('.diff-table');
+    expect(table.textContent).toContain('no newline');
     cleanup(el);
   });
 });

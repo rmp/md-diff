@@ -1,5 +1,23 @@
 import { describe, it, expect } from 'vitest';
 import { splitLines, computeDiff } from '../src/diff-engine.js';
+import { splitLines as reExportedSplitLines, computeDiff as reExportedComputeDiff, MdDiff } from '../src/index.js';
+
+// ── index.js re-exports ──────────────────────────────────────────────────────
+
+describe('index.js re-exports', () => {
+  it('re-exports splitLines from diff-engine', () => {
+    expect(reExportedSplitLines).toBe(splitLines);
+  });
+
+  it('re-exports computeDiff from diff-engine', () => {
+    expect(reExportedComputeDiff).toBe(computeDiff);
+  });
+
+  it('re-exports MdDiff from md-diff', () => {
+    expect(MdDiff).toBeDefined();
+    expect(typeof MdDiff).toBe('function');
+  });
+});
 
 // ── splitLines ────────────────────────────────────────────────────────────────
 
