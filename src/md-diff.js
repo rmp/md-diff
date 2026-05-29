@@ -59,10 +59,14 @@ function buildStyles(p) {
     :host {
       display: block;
       box-sizing: border-box;
+      height: 100%;
     }
     *, *::before, *::after { box-sizing: inherit; }
 
     .container {
+      display: flex;
+      flex-direction: column;
+      height: 100%;
       border: 1px solid ${p.borderColor};
       border-radius: ${p.borderRadius};
       overflow: hidden;
@@ -74,6 +78,8 @@ function buildStyles(p) {
     /* ── Textarea section ──────────────────────────────────────────── */
     .textareas {
       display: flex;
+      flex: 1;
+      min-height: 0;
       gap: 8px;
       padding: 8px;
       background: #f6f8fa;
@@ -89,7 +95,8 @@ function buildStyles(p) {
     }
     textarea {
       width: 100%;
-      height: ${p.textareaHeight};
+      flex: 1;
+      min-height: ${p.textareaHeight};
       font-family: ${p.fontFamily};
       font-size: ${p.fontSize};
       border: 1px solid ${p.borderColor};
