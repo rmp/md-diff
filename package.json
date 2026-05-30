@@ -38,7 +38,7 @@
   "license": "MIT",
   "type": "module",
   "dependencies": {
-    "diff": "^7.0.0",
+    "diff": "^8.0.3",
     "dompurify": "^3.4.7",
     "marked": "^15.0.0"
   },
