@@ -4809,6 +4809,7 @@ ${text}</tr>
     'diff-height',
     'font-size',
     'font-family',
+    'gfm',
     'insertion-color',
     'insertion-text-color',
     'deletion-color',
@@ -4846,9 +4847,9 @@ ${text}</tr>
    * @param {string} content  Raw markdown line
    * @returns {string}        Safe HTML fragment
    */
-  function renderBlock(content) {
+  function renderBlock(content, gfm) {
     if (!content) return '';
-    const raw = /** @type {string} */ (marked.parse(content)).trim();
+    const raw = /** @type {string} */ (marked.parse(content, { gfm })).trim();
     const html = purify.sanitize(raw);
     return html.replace(/^<p>([\s\S]*)<\/p>$/, '$1');
   }
@@ -5015,6 +5016,31 @@ ${text}</tr>
     .diff-cell a         { color: inherit; }
     .diff-cell strong    { font-weight: 700; }
     .diff-cell em        { font-style: italic; }
+    .diff-cell del       { text-decoration: line-through; }
+
+    /* ── GFM table styles ─────────────────────────────────────────── */
+    .diff-cell table {
+      border-collapse: collapse;
+      margin: 0;
+      width: 100%;
+    }
+    .diff-cell th,
+    .diff-cell td {
+      border: 1px solid ${p.borderColor};
+      padding: 4px 8px;
+      text-align: left;
+    }
+    .diff-cell th {
+      font-weight: 600;
+      background: rgba(0,0,0,0.04);
+    }
+
+    /* ── GFM task list styles ─────────────────────────────────────── */
+    .diff-cell input[type="checkbox"] {
+      margin-right: 4px;
+      vertical-align: middle;
+      pointer-events: none;
+    }
   `;
   }
 
@@ -5057,6 +5083,7 @@ ${text}</tr>
       if (oldVal === newVal || !this._connected) return;
       if (name === 'left-content')  { this._left  = newVal ?? ''; this._syncTextarea('left',  this._left);  this._renderDiff(); return; }
       if (name === 'right-content') { this._right = newVal ?? ''; this._syncTextarea('right', this._right); this._renderDiff(); return; }
+      if (name === 'gfm') { this._renderDiff(); return; }
       this._fullRender();
     }
 
@@ -5164,8 +5191,9 @@ ${text}</tr>
       const table = this.shadowRoot.querySelector('.diff-table');
       if (!table) return;
 
+      const gfm = this.hasAttribute('gfm');
       const { leftRows, rightRows } = computeDiff(this._left, this._right);
-      table.innerHTML = leftRows.map((l, i) => rowHtml(l, rightRows[i])).join('');
+      table.innerHTML = leftRows.map((l, i) => rowHtml(l, rightRows[i], gfm)).join('');
     }
   }
 
@@ -5177,15 +5205,15 @@ ${text}</tr>
    * @param {import('./diff-engine.js').DiffRow} right
    * @returns {string}
    */
-  function rowHtml(left, right) {
+  function rowHtml(left, right, gfm) {
     const lNum  = left.lineNum  ?? '';
     const rNum  = right.lineNum ?? '';
     const lType = left.type  === 'equal' ? '' : ` ${left.type}`;
     const rType = right.type === 'equal' ? '' : ` ${right.type}`;
     const lGutterType = left.type  !== 'equal' && left.type  !== 'empty' ? ` lnum-${left.type}`  : '';
     const rGutterType = right.type !== 'equal' && right.type !== 'empty' ? ` rnum-${right.type}` : '';
-    const lContent = left.content  ? renderBlock(left.content)  : '';
-    const rContent = right.content ? renderBlock(right.content) : '';
+    const lContent = left.content  ? renderBlock(left.content, gfm)  : '';
+    const rContent = right.content ? renderBlock(right.content, gfm) : '';
     return (
       `<span class="diff-gutter lnum${lGutterType}">${lNum}</span>` +
       `<span class="diff-cell lcell${lType}">${lContent}</span>` +
