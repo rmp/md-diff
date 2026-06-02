@@ -5,6 +5,7 @@ A lightweight, standalone web component for visual side-by-side markdown diffs.
 - Zero runtime dependencies beyond [`diff`](https://www.npmjs.com/package/diff) and [`marked`](https://www.npmjs.com/package/marked), both bundled
 - Shadow DOM encapsulation — styles never leak in or out
 - Inline markdown rendering (bold, italic, code, links) on each diff line
+- Optional [GitHub Flavored Markdown](https://github.github.com/gfm/) support (tables, strikethrough, autolinks, task lists) via the `gfm` attribute
 - Full UTF-8 support including CJK and emoji
 - Works as a plain `<script>` tag, an ES module, or inside any framework (React, Vue, Svelte, …)
 
@@ -105,6 +106,7 @@ All attributes are optional. Changes at runtime trigger a re-render.
 
 | Attribute | Type | Default | Description |
 |---|---|---|---|
+| `gfm` | boolean | absent | Enable GitHub Flavored Markdown (tables, strikethrough, autolinks, task lists) |
 | `show-textareas` | `"true"` \| `"false"` | `"true"` | Show or hide the editable textarea inputs |
 | `left-label` | string | `"Original"` | Label above the left textarea |
 | `right-label` | string | `"Modified"` | Label above the right textarea |
@@ -145,6 +147,16 @@ All attributes are optional. Changes at runtime trigger a re-render.
   font-size="12px"
 ></md-diff>
 ```
+
+### Example: GitHub Flavored Markdown
+
+```html
+<md-diff gfm show-textareas="false" diff-height="300px"></md-diff>
+```
+
+With `gfm` enabled, content can include GFM extensions such as tables (`| a | b |`),
+strikethrough (`~~text~~`), autolinked URLs, and task lists (`- [x] done`).
+Without the attribute, content is rendered as standard CommonMark.
 
 ## JS property API
 

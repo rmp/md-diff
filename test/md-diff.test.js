@@ -278,6 +278,55 @@ describe('block markdown rendering', () => {
   });
 });
 
+// ── GFM attribute ────────────────────────────────────────────────────────────
+
+describe('gfm attribute', () => {
+  it('renders strikethrough as <del> when gfm is set', () => {
+    const el = createElement({
+      'left-content':  '~~removed~~\n',
+      'right-content': '~~removed~~\n',
+      'gfm': '',
+    });
+    const del = el.shadowRoot.querySelector('.diff-cell del');
+    expect(del).toBeTruthy();
+    expect(del.textContent).toBe('removed');
+    cleanup(el);
+  });
+
+  it('does not render strikethrough without gfm attribute', () => {
+    const el = createElement({
+      'left-content':  '~~removed~~\n',
+      'right-content': '~~removed~~\n',
+    });
+    const del = el.shadowRoot.querySelector('.diff-cell del');
+    expect(del).toBeNull();
+    cleanup(el);
+  });
+
+  it('re-renders when gfm attribute is toggled on', () => {
+    const el = createElement({
+      'left-content':  '~~strike~~\n',
+      'right-content': '~~strike~~\n',
+    });
+    expect(el.shadowRoot.querySelector('.diff-cell del')).toBeNull();
+    el.setAttribute('gfm', '');
+    expect(el.shadowRoot.querySelector('.diff-cell del')).toBeTruthy();
+    cleanup(el);
+  });
+
+  it('re-renders when gfm attribute is removed', () => {
+    const el = createElement({
+      'left-content':  '~~strike~~\n',
+      'right-content': '~~strike~~\n',
+      'gfm': '',
+    });
+    expect(el.shadowRoot.querySelector('.diff-cell del')).toBeTruthy();
+    el.removeAttribute('gfm');
+    expect(el.shadowRoot.querySelector('.diff-cell del')).toBeNull();
+    cleanup(el);
+  });
+});
+
 // ── Property upgrade ─────────────────────────────────────────────────────────
 
 describe('property upgrade', () => {

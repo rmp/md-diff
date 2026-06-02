@@ -69,6 +69,17 @@
 	    ></md-diff>
 	</section>
 
+	<!-- ── Example 4: GitHub Flavored Markdown ───────────────────────────── -->
+	<section>
+	    <h2>GFM enabled (gfm attribute) — strikethrough, tables, autolinks</h2>
+	    <md-diff
+		id="demo4"
+		gfm
+		show-textareas="false"
+		diff-height="300px"
+	    ></md-diff>
+	</section>
+
 	<!-- ── Load bundle then assign content once the element is defined ──── -->
 	<script type="module">
 	 await import('../dist/md-diff.esm.js').catch(() => import('../src/index.js'));
@@ -107,6 +118,29 @@ Added a new section.
 	     el.leftContent  = doc1;
 	     el.rightContent = doc2;
 	 });
+
+	 const gfmLeft = `| Name | Status |
+| --- | --- |
+| Alpha | ~~active~~ |
+| Beta | active |
+
+- [x] Task one
+- [ ] Task two
+`;
+
+	 const gfmRight = `| Name | Status |
+| --- | --- |
+| Alpha | retired |
+| Beta | active |
+| Gamma | active |
+
+- [x] Task one
+- [x] Task two
+- [ ] Task three
+`;
+	 const demo4 = document.getElementById('demo4');
+	 demo4.leftContent  = gfmLeft;
+	 demo4.rightContent = gfmRight;
 	</script>
     </body>
 </html>

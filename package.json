@@ -1,6 +1,6 @@
 {
   "name": "md-diff",
-  "version": "1.0.3",
+  "version": "1.0.5",
   "description": "A web component for visual side-by-side markdown diffs",
   "main": "dist/md-diff.cjs.js",
   "module": "dist/md-diff.esm.js",
